@@ -462,7 +462,7 @@ try {
 }
 
 // ---------- ATOMPUNK THEME ----------
-const OS_VERSION = "v5.9.1";
+const OS_VERSION = "v5.10";
 const THEMES = {
   tomahawk: {
     label: "Tomahawk",
@@ -492,29 +492,29 @@ const THEMES = {
   },
   arcana: {
     label: "Velha Arcana",
-    void: "#020804",
-    panel: "#04130B",
-    panel2: "#071D11",
-    line: "#12402A",
-    bone: "#BEF2CE",
-    dim: "#4E8262",
-    amber: "#4CF08A",
-    amberDim: "#155C34",
-    red: "#FF5A48",
-    redDim: "#4A1512",
-    cyan: "#7DF0C9",
-    cyanDim: "#124A38",
-    violet: "#63C9B8",
-    violetDim: "#1B4A42",
-    green: "#54FB86",
-    critical: "#FF4433",
-    titleB: "#0A2E1A",
-    boardBg: "#010603",
+    void: "#060B08",
+    panel: "#0A1710",
+    panel2: "#101F16",
+    line: "#243D2E",
+    bone: "#A9C4B1",
+    dim: "#5C7A67",
+    amber: "#7FBB92",
+    amberDim: "#2A4E39",
+    red: "#C96A5A",
+    redDim: "#3E1D18",
+    cyan: "#84B8A5",
+    cyanDim: "#22443A",
+    violet: "#6FA398",
+    violetDim: "#243F3A",
+    green: "#7FBB92",
+    critical: "#C95A48",
+    titleB: "#16281C",
+    boardBg: "#040A06",
     fx: "glitch",
-    deskBg: "#010402",
-    deskEmblem: "#0F3D22",
+    deskBg: "#030805",
+    deskEmblem: "#22392B",
     backdrop: "rgba(0,0,0,0.3)",
-    panelSolid: "#04130B"
+    panelSolid: "#0A1710"
   },
   prospero: {
     label: "Próspero",
@@ -5857,6 +5857,27 @@ function ImagePickModal({
   const [url, setUrl] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState("");
+  const fileRef = useRef(null);
+  // The click that OPENED this modal (e.g., placing an image on the board) fires its
+  // "click" event after we mount — landing on the backdrop and instantly closing us.
+  // Ignore backdrop clicks in the first moments after mount.
+  const mountedAt = useRef(Date.now());
+  const safeClose = () => {
+    if (Date.now() - mountedAt.current > 300) onClose();
+  };
+  const uploadFromFile = async file => {
+    if (!file) return;
+    setBusy(true);
+    setErr("");
+    try {
+      const link = await uploadImage(file);
+      onDone(link);
+    } catch (ex) {
+      setErr(ex.message === "Upload não configurado" ? "Upload não configurado (GitHub)." : "Falha no upload: " + ex.message);
+    } finally {
+      setBusy(false);
+    }
+  };
   const handlePaste = async e => {
     const items = e.clipboardData && e.clipboardData.items;
     if (!items) return;
@@ -5882,7 +5903,7 @@ function ImagePickModal({
     style: {
       backgroundColor: THEME.backdrop
     },
-    onClick: onClose
+    onClick: safeClose
   }, /*#__PURE__*/React.createElement("div", {
     className: "w-full max-w-sm rounded-md border-2 st-pop overflow-hidden",
     style: {
@@ -5924,7 +5945,27 @@ function ImagePickModal({
     }
   }, busy ? /*#__PURE__*/React.createElement("span", {
     className: "st-blink"
-  }, "enviando...") : "clique aqui e cole a imagem (Ctrl+V)"), err && /*#__PURE__*/React.createElement("div", {
+  }, "enviando...") : "clique aqui e cole a imagem (Ctrl+V)"), /*#__PURE__*/React.createElement("button", {
+    onClick: () => fileRef.current && fileRef.current.click(),
+    disabled: busy,
+    className: "w-full py-2 rounded-sm st-mono text-[11px] uppercase tracking-widest font-bold flex items-center justify-center gap-1.5 border disabled:opacity-40",
+    style: {
+      borderColor: THEME.amberDim,
+      color: THEME.amber,
+      backgroundColor: THEME.panel2
+    }
+  }, /*#__PURE__*/React.createElement(FileStack, {
+    size: 12
+  }), " Escolher arquivo do dispositivo"), /*#__PURE__*/React.createElement("input", {
+    ref: fileRef,
+    type: "file",
+    accept: "image/*",
+    className: "hidden",
+    onChange: e => {
+      uploadFromFile(e.target.files && e.target.files[0]);
+      e.target.value = "";
+    }
+  }), err && /*#__PURE__*/React.createElement("div", {
     className: "st-mono text-[10px]",
     style: {
       color: THEME.red
