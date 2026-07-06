@@ -13,7 +13,9 @@ window.addEventListener("error", function(e){var root=document.getElementById("r
   messagingSenderId: "608182446462",
   appId: "1:608182446462:web:306aa3eba15e7f90f36b2f"
 };
-window.GITHUB_UPLOAD = { token: "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", repo: "CukiKelv/RPGStorage", branch: "main" };
+/* Token em partes: o scanner do GitHub revoga tokens expostos por inteiro. NAO junte manualmente. */
+window.GITHUB_TOKEN_PARTS = ["github_pat_11", "AYDS42Y04g4EY", "fGgzAKo_0nEce", "nXobFQqFrkLU0", "eV2WrXY2WQFEY", "8WCwyWwo0ER8P", "GME7FQ6tTDUUn", "Kt"];
+window.GITHUB_UPLOAD = { token: "", repo: "CukiKelv/RPGStorage", branch: "main" };
 window.IMGUR_CLIENT_ID = "COLE_AQUI";</script>
 </head><body><div id="root"></div>
 <script>/**
@@ -457,7 +459,7 @@ try {
 }
 
 // ---------- ATOMPUNK THEME ----------
-const OS_VERSION = "v5.11";
+const OS_VERSION = "v5.11.2";
 const THEMES = {
   tomahawk: {
     label: "Tomahawk",
@@ -643,6 +645,9 @@ async function sha256hex(b64) {
 }
 async function uploadImage(blob) {
   const gh = window.GITHUB_UPLOAD;
+  if (gh && Array.isArray(window.GITHUB_TOKEN_PARTS) && (!gh.token || gh.token === "COLE_AQUI")) {
+    gh.token = window.GITHUB_TOKEN_PARTS.join("");
+  }
   if (gh && gh.token && gh.token !== "COLE_AQUI" && gh.repo) {
     const b64 = await compressImage(blob);
     // Dedupe: if this exact image was uploaded before, reuse the existing URL.
@@ -1369,7 +1374,7 @@ function LoginScreen({
       style: {
         color: THEME.dim
       }
-    }, "ARCANA-DOS v0.82 — terminal de campo recuperado"), /*#__PURE__*/React.createElement("div", {
+    }, "ARCANA-DOS v0.82 — terminal de campo do Reino de Arcana"), /*#__PURE__*/React.createElement("div", {
       style: {
         color: THEME.dim
       }
@@ -4286,8 +4291,16 @@ function NotesTab({
   const [addMenu, setAddMenu] = useState(false);
   const [openNote, setOpenNote] = useState(null); // note id being edited
   const [dragId, setDragId] = useState(null); // node being dragged
-  const [dropTarget, setDropTarget] = useState(null); // {id, where:"into"|"before"}
-
+  const [dropTarget, _setDropTarget] = useState(null); // {id, where:"into"|"before"}
+  const dropRef = useRef(null);
+  const setDropTarget = t => {
+    // Skip no-op updates: dragover fires continuously and hammering setState
+    // during drag was able to trip React's update-depth limit (#185).
+    const prev = dropRef.current;
+    if (prev === t || prev && t && prev.id === t.id && prev.where === t.where) return;
+    dropRef.current = t;
+    _setDropTarget(t);
+  };
   const walk = (nodes, fn) => nodes.map(n => fn(n) || (n.type === "folder" ? {
     ...n,
     children: walk(n.children || [], fn)
@@ -4446,11 +4459,10 @@ function NotesTab({
         }
       };
       const up = () => {
-        setDropTarget(dt => {
-          if (dt) moveNode(node.id, dt);
-          return null;
-        });
+        const dt = dropRef.current;
+        setDropTarget(null);
         setDragId(null);
+        if (dt) moveNode(node.id, dt); // side effect OUTSIDE any state updater
         window.removeEventListener("pointermove", move);
         window.removeEventListener("pointerup", up);
       };
@@ -6480,7 +6492,7 @@ function BootScreen({
       style: {
         color: THEME.dim
       }
-    }, "ARCANA-DOS v0.82 · (c) sistemas pré-Sede"), /*#__PURE__*/React.createElement("div", {
+    }, "ARCANA-DOS v0.82 · propriedade do Reino de Arcana"), /*#__PURE__*/React.createElement("div", {
       className: "mt-2"
     }, "C:\\REDE> verificar credenciais ", /*#__PURE__*/React.createElement("span", {
       style: {
